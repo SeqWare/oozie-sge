@@ -80,8 +80,8 @@ public class Qsub {
     }
 
     int exitVal = handler.getExitValue();
-    String output = out.toString();
     if (exitVal == 0) {
+      String output = out.toString();
       log.debug("Exit output from qsub: {0}", output);
       Matcher m = QSUB_JOB_ID.matcher(output);
       if (m.matches()) {
@@ -94,7 +94,7 @@ public class Qsub {
       }
     } else {
       log.error("Exit value from qsub: {0}", exitVal);
-      log.error("Exit output from qsub: {0}", output);
+      log.error("Exit output from qsub: {0}", out);
       return null;
     }
   }
