@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:sge="uri:oozie:sge-action:0.1"
+  elementFormDefault="qualified" targetNamespace="uri:oozie:sge-action:0.1">
+
+  <element name="sge" type="sge:ACTION" />
+
+  <complexType name="ACTION">
+    <sequence>
+      <element name="script" type="string" minOccurs="1" maxOccurs="1" />
+      <element name="working-directory" type="string" minOccurs="1" maxOccurs="1" />
+    </sequence>
+  </complexType>
+
+</schema>
