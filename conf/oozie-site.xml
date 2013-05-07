@@ -23,6 +23,17 @@
         Oozie configuration properties and their default values.
     -->
 
+    <!-- Uncomment for faster polling, useful during testing
+    <property>
+      <name>oozie.service.ActionCheckerService.action.check.interval</name>
+      <value>5</value>
+    </property>
+    <property>
+      <name>oozie.service.ActionCheckerService.action.check.delay</name>
+      <value>10</value>
+    </property>
+    -->
+
     <property>
         <name>oozie.service.ActionService.executor.ext.classes</name>
         <value>

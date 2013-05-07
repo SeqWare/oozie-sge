@@ -61,13 +61,19 @@ public class SgeActionExecutor extends ActionExecutor {
   public void check(Context context, WorkflowAction action)
       throws ActionExecutorException {
     log.info("SGE_CHECK");
-    // TODO: impl check
-    boolean completed = true;
-    Properties actionData = null;
-    if (completed) {
-      context.setExecutionData(Status.OK.toString(), actionData);
-    } else {
-      context.setExternalStatus(Status.RUNNING.toString());
+    try{
+      String jobId = action.getExternalId();
+      if (Qstat.running(jobId)){
+        context.setExternalStatus(Status.RUNNING.toString());
+      } else if (Qacct.done(jobId)){
+        // TODO: probably fill this out:
+        Properties actionData = null;
+        context.setExecutionData(Status.OK.toString(), actionData);
+      } else {
+        context.setExternalStatus(Status.ERROR.toString());
+      }
+    }catch (Exception e){
+      throw convertException(e);
     }
   }
 
