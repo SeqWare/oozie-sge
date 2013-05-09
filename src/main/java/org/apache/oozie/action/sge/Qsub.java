@@ -15,7 +15,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.oozie.util.XLog;
 
 public class Qsub {
-  public static final String QSUB_JOB_ID_REGEX = "Your job (\\S+) \\(.+\\) has been submitted\\n";
+  public static final String QSUB_JOB_ID_REGEX = "(?m)^Your job (\\S+) \\(.+\\) has been submitted$";
   private static final Pattern QSUB_JOB_ID = Pattern.compile(QSUB_JOB_ID_REGEX);
   private static final XLog log = XLog.getLog(Qsub.class);
 
@@ -49,7 +49,6 @@ public class Qsub {
 
   public static String invoke(File script, File workingDir,
                               Map<Object, Object> environment) throws Exception {
-
     log.debug("Qsub.invoke: {0}, {1}", script, workingDir);
 
     ensureFile(script);
@@ -84,7 +83,7 @@ public class Qsub {
       String output = out.toString();
       log.debug("Exit output from qsub: {0}", output);
       Matcher m = QSUB_JOB_ID.matcher(output);
-      if (m.matches()) {
+      if (m.find()) {
         String jobId = m.group(1);
         log.debug("Job ID: {0}", jobId);
         return jobId;
