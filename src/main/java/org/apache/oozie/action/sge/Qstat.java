@@ -16,7 +16,7 @@ public class Qstat {
 
   public static boolean running(String jobId) throws Exception {
 
-    log.error("Qsub.running: {0}", jobId);
+    log.debug("Qsub.running: {0}", jobId);
 
     CommandLine command = new CommandLine("qstat");
     command.addArgument("-j");
@@ -42,16 +42,17 @@ public class Qstat {
     }
 
     int exitVal = handler.getExitValue();
-    log.error("Exit value from qstat: {0}", exitVal);
-    log.error("Exit output from qstat: {0}", out);
-    
+    log.debug("Exit value from qstat: {0}", exitVal);
+    log.debug("Exit output from qstat: {0}", out);
+
     // TODO: check output as well
     if (exitVal == 0) {
       return true;
-    } else if (exitVal == 1){
+    } else if (exitVal == 1) {
       return false;
     } else {
-      throw new RuntimeException("Unexpected exit value from qstat: "+exitVal+" output: "+out.toString());
+      throw new RuntimeException("Unexpected exit value from qstat: " + exitVal
+          + " output: " + out.toString());
     }
   }
 
