@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:sge="uri:oozie:sge-action:0.1"
-  elementFormDefault="qualified" targetNamespace="uri:oozie:sge-action:0.1">
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:sge="uri:oozie:sge-action:1.0"
+  elementFormDefault="qualified" targetNamespace="uri:oozie:sge-action:1.0">
 
   <element name="sge" type="sge:ACTION" />
 
