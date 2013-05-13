@@ -57,6 +57,8 @@ public class Qsub {
     CommandLine command = new CommandLine("qsub");
     command.addArgument("-cwd");
     command.addArgument("${script}");
+    command.addArgument("-b");
+    command.addArgument("y");
 
     Map<String, Object> subst = new HashMap<String, Object>();
     subst.put("script", script);
