@@ -19,10 +19,14 @@ public class Qacct {
   private static final XLog log = XLog.getLog(Qacct.class);
 
   public static Map<String, String> done(String jobId) throws Exception {
+    return done("qacct", jobId);
+  }
 
-    log.debug("Qacct.done: {0}", jobId);
+  static Map<String, String> done(String qacctCommand, String jobId) throws Exception {
 
-    CommandLine command = new CommandLine("qacct");
+    log.debug("Qacct.done: {0}, {1}", qacctCommand, jobId);
+
+    CommandLine command = new CommandLine(qacctCommand);
     command.addArgument("-j");
     command.addArgument("${jobId}");
 

@@ -19,60 +19,41 @@ public class Qsub {
   private static final Pattern QSUB_JOB_ID = Pattern.compile(QSUB_JOB_ID_REGEX);
   private static final XLog log = XLog.getLog(Qsub.class);
 
-  private static void ensureDir(File f){
-    if (!f.exists()){
-      throw new RuntimeException(f.getAbsolutePath()+" does not exist or is not accessible to user "+System.getProperty("user.name"));
-    }
-    
-    if (!f.isDirectory()) {
-      throw new RuntimeException(f.getAbsolutePath()+" is not a directory.");
-    }
-    
-    if (!(f.canRead() && f.canWrite())){
-      throw new RuntimeException(f.getAbsolutePath()+" does not have read/write access for user "+System.getProperty("user.name"));
-    }
-  }
-
-  private static void ensureFile(File f){
-    if (!f.exists()){
-      throw new RuntimeException(f.getAbsolutePath()+" does not exist or is not accessible to user "+System.getProperty("user.name"));
-    }
-    
-    if (!f.isFile()) {
-      throw new RuntimeException(f.getAbsolutePath()+" is not a regular file.");
-    }
-    
-    if (!(f.canRead() && f.canExecute())){
-      throw new RuntimeException(f.getAbsolutePath()+" does not have read/execute access for user "+System.getProperty("user.name"));
-    }
-  }
-
   public static String invoke(File script, File workingDir,
                               Map<Object, Object> environment) throws Exception {
-    log.debug("Qsub.invoke: {0}, {1}", script, workingDir);
+    return invoke("qsub", script, workingDir, environment);
+  }
 
-    ensureFile(script);
-    ensureDir(workingDir);
+  // package-private for testing
+  static String invoke(String qsubCommand, File script, File workingDir,
+                       Map<Object, Object> environment) throws Exception {
 
-    CommandLine command = new CommandLine("qsub");
-    command.addArgument("-cwd");
-    command.addArgument("${script}");
-    command.addArgument("-b");
-    command.addArgument("y");
+    log.debug("Qsub.invoke: {0}, {1}, {2}", qsubCommand, script, workingDir);
 
     Map<String, Object> subst = new HashMap<String, Object>();
     subst.put("script", script);
-    command.setSubstitutionMap(subst);
+
+    CommandLine qsub = new CommandLine(qsubCommand);
+    qsub.addArgument("-cwd");
+    qsub.addArgument("-b");
+    qsub.addArgument("y");
+    qsub.addArgument("${script}");
+    qsub.setSubstitutionMap(subst);
+
+    log.error("User {0} invoking command: {1}",
+              System.getProperty("user.name"), qsub);
 
     Executor exec = new DefaultExecutor();
-    exec.setWorkingDirectory(workingDir);
+    if (workingDir != null) {
+      exec.setWorkingDirectory(workingDir);
+    }
 
     // Capture the output for parsing
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     exec.setStreamHandler(new PumpStreamHandler(out));
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    exec.execute(command, environment, handler);
+    exec.execute(qsub, environment, handler);
 
     try {
       handler.waitFor();

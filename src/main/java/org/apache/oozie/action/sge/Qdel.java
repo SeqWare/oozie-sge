@@ -11,20 +11,14 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.oozie.util.XLog;
 
-public class Qstat {
-  private static final XLog log = XLog.getLog(Qstat.class);
+public class Qdel {
+  private static final XLog log = XLog.getLog(Qdel.class);
 
-  public static boolean running(String jobId) throws Exception {
-    return running("qstat", jobId);
-  }
+  public static void invoke(String jobId) throws Exception {
 
-  // package-private for testing
-  static boolean running(String qstatCommand, String jobId) throws Exception {
+    log.debug("Qdel.invoke: {0}", jobId);
 
-    log.debug("Qstat.running: {0}, {1}", qstatCommand, jobId);
-
-    CommandLine command = new CommandLine(qstatCommand);
-    command.addArgument("-j");
+    CommandLine command = new CommandLine("qdel");
     command.addArgument("${jobId}");
 
     Map<String, Object> subst = new HashMap<String, Object>();
@@ -46,19 +40,8 @@ public class Qstat {
       Thread.currentThread().interrupt();
     }
 
-    int exitVal = handler.getExitValue();
-    log.debug("Exit value from qstat: {0}", exitVal);
-    log.debug("Exit output from qstat: {0}", out);
-
-    // TODO: check output as well
-    if (exitVal == 0) {
-      return true;
-    } else if (exitVal == 1) {
-      return false;
-    } else {
-      throw new RuntimeException("Unexpected exit value from qstat: " + exitVal
-          + " output: " + out.toString());
-    }
+    log.debug("Exit value from dqel: {0}", handler.getExitValue());
+    log.debug("Exit output from dqel: {0}", out);
   }
 
 }
