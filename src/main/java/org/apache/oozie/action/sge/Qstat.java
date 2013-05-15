@@ -30,6 +30,10 @@ public class Qstat {
 
     log.debug("Qstat.running: {0}, {1}", qstatCommand, jobId);
 
+    if (jobId == null) {
+      throw new IllegalArgumentException("Missing job ID.");
+    }
+
     CommandLine command = new CommandLine(qstatCommand);
     command.addArgument("-j");
     command.addArgument("${jobId}");

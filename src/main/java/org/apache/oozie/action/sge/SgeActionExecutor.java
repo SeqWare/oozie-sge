@@ -56,11 +56,13 @@ public class SgeActionExecutor extends ActionExecutor {
 
       String sScript = root.getChildTextTrim("script", ns);
       String sWorkingDir = root.getChildTextTrim("working-directory", ns);
+      String sOptions = root.getChildTextTrim("options-file", ns);
 
       File script = new File(sScript);
       File workingDir = new File(sWorkingDir);
+      File options = sOptions == null ? null : new File(sOptions);
 
-      String jobId = Qsub.invoke(script, workingDir, null);
+      String jobId = Qsub.invoke(script, options, workingDir, null);
       if (jobId != null) {
         context.setVar(VAR_CHECK_DEFER, String.valueOf(DEFAULT_CHECK_DEFERS));
         context.setStartData(jobId, "-", "-");

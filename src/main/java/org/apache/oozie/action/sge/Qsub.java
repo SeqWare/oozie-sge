@@ -24,39 +24,54 @@ public class Qsub {
    * 
    * @param script
    *          the script to pass to qsub
+   * @param options
+   *          the options file to pass to qsub
    * @param workingDir
    *          the working directory of the invocation
    * @param environment
    *          any environment variables
    * @return the jobId, or null if the qsub invocation failed
    */
-  public static String invoke(File script, File workingDir,
+  public static String invoke(File script, File options, File workingDir,
                               Map<Object, Object> environment) {
-    return invoke("qsub", script, workingDir, environment);
+    return invoke("qsub", script, options, workingDir, environment);
   }
 
   // package-private for testing
-  static String invoke(String qsubCommand, File script, File workingDir,
-                       Map<Object, Object> environment) {
+  static String invoke(String qsubCommand, File script, File options,
+                       File workingDir, Map<Object, Object> environment) {
 
     log.debug("Qsub.invoke: {0}, {1}, {2}", qsubCommand, script, workingDir);
 
-    // Ensure relative scripts are rooted from the specified working directory,
+    if (script == null) {
+      throw new IllegalArgumentException("Missing script file.");
+    }
+
+    // Ensure relative files are rooted from the specified working directory,
     // since CommandLine will otherwise extract an absolute path using the
     // current working directory.
     if (!script.isAbsolute() && workingDir != null) {
       script = new File(workingDir, script.getPath());
     }
+    if (options != null && options.isAbsolute() && workingDir != null) {
+      options = new File(workingDir, options.getPath());
+    }
 
     Map<String, Object> subst = new HashMap<String, Object>();
     subst.put("script", script);
+    subst.put("options", options);
 
     CommandLine qsub = new CommandLine(qsubCommand);
-    qsub.addArgument("-cwd");
-    qsub.addArgument("-b");
-    qsub.addArgument("y");
-    qsub.addArgument("${script}");
     qsub.setSubstitutionMap(subst);
+    if (options == null) {
+      qsub.addArgument("-cwd");
+      qsub.addArgument("-b");
+      qsub.addArgument("y");
+    } else {
+      qsub.addArgument("-@");
+      qsub.addArgument("${options}");
+    }
+    qsub.addArgument("${script}");
 
     log.error("User {0} invoking command: {1}",
               System.getProperty("user.name"), qsub);

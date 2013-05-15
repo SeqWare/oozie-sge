@@ -34,6 +34,10 @@ public class Qacct {
 
     log.debug("Qacct.done: {0}, {1}", qacctCommand, jobId);
 
+    if (jobId == null) {
+      throw new IllegalArgumentException("Missing job ID.");
+    }
+
     CommandLine command = new CommandLine(qacctCommand);
     command.addArgument("-j");
     command.addArgument("${jobId}");

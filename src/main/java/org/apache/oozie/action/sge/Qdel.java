@@ -24,6 +24,10 @@ public class Qdel {
 
     log.debug("Qdel.invoke: {0}", jobId);
 
+    if (jobId == null) {
+      throw new IllegalArgumentException("Missing job ID.");
+    }
+
     CommandLine command = new CommandLine("qdel");
     command.addArgument("${jobId}");
 
