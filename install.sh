@@ -1,31 +1,34 @@
-mvn -Dmaven.test.skip=true clean package
+mvn clean package
 
-HOST="USER@HOST"
-AUTH="-i PEM"
+if [ $? -eq 0 ]; then
 
-SCP="scp "$AUTH
-SSH="ssh "$AUTH" "$HOST
+	HOST="USER@HOST"
+	AUTH="-i PEM"
 
-echo
-echo "Stoping oozie:"
-$SSH -t "/etc/init.d/oozie stop" > /dev/null
+	SCP="scp "$AUTH
+	SSH="ssh "$AUTH" "$HOST
 
-echo
-echo "Ensuring dirs:"
-$SSH -t "mkdir -p /usr/lib/oozie/oozie-server-0.20/webapps/oozie/WEB-INF/lib/"
+	echo
+	echo "Stoping oozie:"
+	$SSH -t "/etc/init.d/oozie stop" > /dev/null
 
-echo
-echo "Updating JARs:"
-$SCP target/oozie-sge-0.0.1-SNAPSHOT.jar \
-     /Users/ataggart/.m2/repository/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar \
-     $HOST:/usr/lib/oozie/oozie-server-0.20/webapps/oozie/WEB-INF/lib/
+	echo
+	echo "Ensuring dirs:"
+	$SSH -t "mkdir -p /usr/lib/oozie/oozie-server-0.20/webapps/oozie/WEB-INF/lib/"
 
-echo
-echo "Updating oozie config:"
-$SCP conf/oozie-site.xml $HOST:/etc/oozie/conf.dist/
+	echo
+	echo "Updating JARs:"
+	$SCP target/oozie-sge-0.0.1-SNAPSHOT.jar \
+	     /Users/ataggart/.m2/repository/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar \
+	     $HOST:/usr/lib/oozie/oozie-server-0.20/webapps/oozie/WEB-INF/lib/
 
-echo
-echo "Starting oozie:"
-$SSH -t "/etc/init.d/oozie start" > /dev/null
+	echo
+	echo "Updating oozie config:"
+	$SCP conf/oozie-site.xml $HOST:/etc/oozie/conf.dist/
 
+	echo
+	echo "Starting oozie:"
+	$SSH -t "/etc/init.d/oozie start" > /dev/null
+
+fi
 
