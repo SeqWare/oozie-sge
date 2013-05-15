@@ -85,30 +85,31 @@ public class SgeActionExecutor extends ActionExecutor {
   @Override
   public void check(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.check: {0}", action.getId());
-    try {
-      String jobId = action.getExternalId();
-      if (Qstat.running(jobId)) {
+    String jobId = action.getExternalId();
+    if (Qstat.running(jobId)) {
+      context.setExternalStatus(EXT_RUNNING);
+    } else {
+      Map<String, String> result = Qacct.done(jobId);
+
+      if (result != null) {
+        // Job is done
+        Properties actionData = new Properties();
+        actionData.putAll(result);
+
+        if (Qacct.failed(result)) {
+          context.setExecutionData(EXT_FAILED, actionData);
+        } else if (Qacct.exitError(result)) {
+          context.setExecutionData(EXT_EXIT_ERROR, actionData);
+        } else {
+          context.setExecutionData(EXT_SUCCESSFUL, actionData);
+        }
+      } else if (canDefer(context)) {
+        // Job may be done or lost, put off declaring it lost
         context.setExternalStatus(EXT_RUNNING);
       } else {
-        Map<String, String> result = Qacct.done(jobId);
-        if (result != null) {
-          Properties actionData = new Properties();
-          actionData.putAll(result);
-          if (Qacct.failed(result)) {
-            context.setExecutionData(EXT_FAILED, actionData);
-          } else if (Qacct.exitError(result)) {
-            context.setExecutionData(EXT_EXIT_ERROR, actionData);
-          } else {
-            context.setExecutionData(EXT_SUCCESSFUL, actionData);
-          }
-        } else if (canDefer(context)) {
-          context.setExternalStatus(EXT_RUNNING);
-        } else {
-          context.setExecutionData(EXT_LOST, null);
-        }
+        // Job may be done or lost, call it lost
+        context.setExecutionData(EXT_LOST, null);
       }
-    } catch (Exception e) {
-      throw convertException(e);
     }
   }
 
@@ -121,7 +122,6 @@ public class SgeActionExecutor extends ActionExecutor {
   public void end(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.end: {0}", action.getId());
     if (action.getExternalStatus().equals(EXT_SUCCESSFUL)) {
-      // TODO: cleanup stdout/stderror files written by sge
       context.setEndData(Status.OK, Status.OK.toString());
     } else {
       context.setEndData(Status.ERROR, Status.ERROR.toString());
@@ -131,11 +131,7 @@ public class SgeActionExecutor extends ActionExecutor {
   @Override
   public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.kill: {0}", action.getId());
-    try {
-      Qdel.invoke(action.getExternalId());
-    } catch (Exception e) {
-      // gulp
-    }
+    Qdel.invoke(action.getExternalId());
     context.setEndData(Status.KILLED, Status.KILLED.toString());
   }
 

@@ -18,11 +18,19 @@ public class Qacct {
   private static final Pattern ENTRY = Pattern.compile(ENTRY_REGEX);
   private static final XLog log = XLog.getLog(Qacct.class);
 
-  public static Map<String, String> done(String jobId) throws Exception {
+  /**
+   * Function for invoking qacct for a specific job.
+   * 
+   * @param jobId
+   *          the job to query
+   * @return the results of qacct, or null if qacct exited abnormally
+   */
+  public static Map<String, String> done(String jobId) {
     return done("qacct", jobId);
   }
 
-  static Map<String, String> done(String qacctCommand, String jobId) throws Exception {
+  // package-private for testing
+  static Map<String, String> done(String qacctCommand, String jobId) {
 
     log.debug("Qacct.done: {0}, {1}", qacctCommand, jobId);
 
@@ -41,12 +49,13 @@ public class Qacct {
     exec.setStreamHandler(new PumpStreamHandler(out));
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    exec.execute(command, handler);
-
     try {
+      exec.execute(command, handler);
       handler.waitFor();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
 
     int exitVal = handler.getExitValue();
@@ -64,19 +73,34 @@ public class Qacct {
     }
   }
 
+  /**
+   * Tests whether the results indicate that the script passed to qsub yielded
+   * an abnormal exit code.
+   * 
+   * @param result
+   *          the results of {{@link #done(String)}
+   * @return true if the script exited abnormally, false otherwise
+   */
   public static boolean exitError(Map<String, String> result) {
     String exit = result.get("exit_status");
     log.debug("exit_status: {0}", exit);
     return !"0".equals(exit);
   }
 
+  /**
+   * Tests whether the results indicate that the qsub job itself failed.
+   * 
+   * @param result
+   *          the results of {{@link #done(String)}
+   * @return true if the job failed, false otherwise
+   */
   public static boolean failed(Map<String, String> result) {
     String failed = result.get("failed");
     log.debug("failed: {0}", failed);
     return !"0".equals(failed);
   }
 
-  public static Map<String, String> toMap(String output) {
+  private static Map<String, String> toMap(String output) {
     Map<String, String> map = new HashMap<String, String>();
     Matcher m = ENTRY.matcher(output);
     while (m.find()) {

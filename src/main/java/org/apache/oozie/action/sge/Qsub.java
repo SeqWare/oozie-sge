@@ -19,16 +19,34 @@ public class Qsub {
   private static final Pattern QSUB_JOB_ID = Pattern.compile(QSUB_JOB_ID_REGEX);
   private static final XLog log = XLog.getLog(Qsub.class);
 
+  /**
+   * Function to invoke qsub.
+   * 
+   * @param script
+   *          the script to pass to qsub
+   * @param workingDir
+   *          the working directory of the invocation
+   * @param environment
+   *          any environment variables
+   * @return the jobId, or null if the qsub invocation failed
+   */
   public static String invoke(File script, File workingDir,
-                              Map<Object, Object> environment) throws Exception {
+                              Map<Object, Object> environment) {
     return invoke("qsub", script, workingDir, environment);
   }
 
   // package-private for testing
   static String invoke(String qsubCommand, File script, File workingDir,
-                       Map<Object, Object> environment) throws Exception {
+                       Map<Object, Object> environment) {
 
     log.debug("Qsub.invoke: {0}, {1}, {2}", qsubCommand, script, workingDir);
+
+    // Ensure relative scripts are rooted from the specified working directory,
+    // since CommandLine will otherwise extract an absolute path using the
+    // current working directory.
+    if (!script.isAbsolute() && workingDir != null) {
+      script = new File(workingDir, script.getPath());
+    }
 
     Map<String, Object> subst = new HashMap<String, Object>();
     subst.put("script", script);
@@ -53,12 +71,14 @@ public class Qsub {
     exec.setStreamHandler(new PumpStreamHandler(out));
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    exec.execute(qsub, environment, handler);
 
     try {
+      exec.execute(qsub, environment, handler);
       handler.waitFor();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
 
     int exitVal = handler.getExitValue();

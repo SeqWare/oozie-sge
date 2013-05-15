@@ -14,12 +14,19 @@ import org.apache.oozie.util.XLog;
 public class Qstat {
   private static final XLog log = XLog.getLog(Qstat.class);
 
-  public static boolean running(String jobId) throws Exception {
+  /**
+   * Function indicating whether a job is known to be running.
+   * 
+   * @param jobId
+   *          the job
+   * @return true if the job is running, false otherwise
+   */
+  public static boolean running(String jobId) {
     return running("qstat", jobId);
   }
 
   // package-private for testing
-  static boolean running(String qstatCommand, String jobId) throws Exception {
+  static boolean running(String qstatCommand, String jobId) {
 
     log.debug("Qstat.running: {0}, {1}", qstatCommand, jobId);
 
@@ -38,12 +45,14 @@ public class Qstat {
     exec.setStreamHandler(new PumpStreamHandler(out));
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    exec.execute(command, handler);
 
     try {
+      exec.execute(command, handler);
       handler.waitFor();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
 
     int exitVal = handler.getExitValue();

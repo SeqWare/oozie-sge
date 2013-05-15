@@ -14,7 +14,13 @@ import org.apache.oozie.util.XLog;
 public class Qdel {
   private static final XLog log = XLog.getLog(Qdel.class);
 
-  public static void invoke(String jobId) throws Exception {
+  /**
+   * Function to invoke qdel.
+   * 
+   * @param jobId
+   *          the job to delete
+   */
+  public static void invoke(String jobId) {
 
     log.debug("Qdel.invoke: {0}", jobId);
 
@@ -32,12 +38,13 @@ public class Qdel {
     exec.setStreamHandler(new PumpStreamHandler(out));
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    exec.execute(command, handler);
-
     try {
+      exec.execute(command, handler);
       handler.waitFor();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
 
     log.debug("Exit value from dqel: {0}", handler.getExitValue());
