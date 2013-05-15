@@ -20,16 +20,17 @@ public class Qsub {
   private static final XLog log = XLog.getLog(Qsub.class);
 
   /**
-   * Function to invoke qsub.
+   * Function to invoke qsub. If no options file is provided, the following args
+   * are included by default: <code>-b y -cwd</code>
    * 
    * @param script
    *          the script to pass to qsub
    * @param options
-   *          the options file to pass to qsub
+   *          the options file to pass to qsub, or null
    * @param workingDir
-   *          the working directory of the invocation
+   *          the working directory of the invocation, or null
    * @param environment
-   *          any environment variables
+   *          any environment variables, or null
    * @return the jobId, or null if the qsub invocation failed
    */
   public static String invoke(File script, File options, File workingDir,
