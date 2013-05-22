@@ -8,17 +8,22 @@ import junit.framework.TestCase;
 public class QacctTest extends TestCase {
   
   public void testChecks(){
+
+    String output;
     Map<String, String> result;
     
-    result = Qacct.done(new File("src/test/bin/qacct-ok").getAbsolutePath(), "12345");
+    output = Qacct.done(new File("src/test/bin/qacct-ok").getAbsolutePath(), "12345");
+    result  = Qacct.toMap(output);
     assertFalse(Qacct.failed(result));
     assertFalse(Qacct.exitError(result));
     
-    result = Qacct.done(new File("src/test/bin/qacct-failed").getAbsolutePath(), "12345");
+    output = Qacct.done(new File("src/test/bin/qacct-failed").getAbsolutePath(), "12345");
+    result  = Qacct.toMap(output);
     assertTrue(Qacct.failed(result));
     assertFalse(Qacct.exitError(result));
     
-    result = Qacct.done(new File("src/test/bin/qacct-exit-error").getAbsolutePath(), "12345");
+    output = Qacct.done(new File("src/test/bin/qacct-exit-error").getAbsolutePath(), "12345");
+    result  = Qacct.toMap(output);
     assertFalse(Qacct.failed(result));
     assertTrue(Qacct.exitError(result));
   }

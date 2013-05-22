@@ -23,14 +23,14 @@ public class Qacct {
    * 
    * @param jobId
    *          the job to query
-   * @return the results of qacct, or null if qacct exited abnormally
+   * @return the output of qacct, or null if qacct exited abnormally
    */
-  public static Map<String, String> done(String jobId) {
+  public static String done(String jobId) {
     return done("qacct", jobId);
   }
 
   // package-private for testing
-  static Map<String, String> done(String qacctCommand, String jobId) {
+  static String done(String qacctCommand, String jobId) {
 
     log.debug("Qacct.done: {0}, {1}", qacctCommand, jobId);
 
@@ -68,7 +68,7 @@ public class Qacct {
 
     // TODO: check output as well
     if (exitVal == 0) {
-      return toMap(out.toString());
+      return out.toString();
     } else if (exitVal == 1) {
       return null;
     } else {
@@ -84,6 +84,7 @@ public class Qacct {
    * @param result
    *          the results of {{@link #done(String)}
    * @return true if the script exited abnormally, false otherwise
+   * @see {{@link #toMap(String)}
    */
   public static boolean exitError(Map<String, String> result) {
     String exit = result.get("exit_status");
@@ -97,6 +98,7 @@ public class Qacct {
    * @param result
    *          the results of {{@link #done(String)}
    * @return true if the job failed, false otherwise
+   * @see {{@link #toMap(String)}
    */
   public static boolean failed(Map<String, String> result) {
     String failed = result.get("failed");
@@ -104,7 +106,14 @@ public class Qacct {
     return !"0".equals(failed);
   }
 
-  private static Map<String, String> toMap(String output) {
+  /**
+   * Convenience function for parsing qacct output into a map.
+   * 
+   * @param output
+   *          the output from qcct
+   * @return a map of qacct keys and their values
+   */
+  public static Map<String, String> toMap(String output) {
     Map<String, String> map = new HashMap<String, String>();
     Matcher m = ENTRY.matcher(output);
     while (m.find()) {

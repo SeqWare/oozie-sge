@@ -9,11 +9,13 @@ import java.util.Set;
 
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
+import org.apache.oozie.action.ActionExecutorException.ErrorType;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.Namespace;
 
 public class SgeActionExecutor extends ActionExecutor {
@@ -50,27 +52,29 @@ public class SgeActionExecutor extends ActionExecutor {
     String conf = action.getConf();
     log.debug("Extracted xml config: {0}", conf);
 
+    Element root;
     try {
-      Element root = XmlUtils.parseXml(conf);
-      Namespace ns = root.getNamespace();
-
-      String sScript = root.getChildTextTrim("script", ns);
-      String sWorkingDir = root.getChildTextTrim("working-directory", ns);
-      String sOptions = root.getChildTextTrim("options-file", ns);
-
-      File script = new File(sScript);
-      File workingDir = new File(sWorkingDir);
-      File options = sOptions == null ? null : new File(sOptions);
-
-      String jobId = Qsub.invoke(script, options, workingDir, null);
-      if (jobId != null) {
-        context.setVar(VAR_CHECK_DEFER, String.valueOf(DEFAULT_CHECK_DEFERS));
-        context.setStartData(jobId, "-", "-");
-      } else {
-        context.setExecutionData(EXT_LOST, null);
-      }
-    } catch (Exception e) {
+      root = XmlUtils.parseXml(conf);
+    } catch (JDOMException e) {
       throw convertException(e);
+    }
+    Namespace ns = root.getNamespace();
+
+    String sScript = root.getChildTextTrim("script", ns);
+    String sWorkingDir = root.getChildTextTrim("working-directory", ns);
+    String sOptions = root.getChildTextTrim("options-file", ns);
+
+    File script = new File(sScript);
+    File workingDir = new File(sWorkingDir);
+    File options = sOptions == null ? null : new File(sOptions);
+
+    String jobId = Qsub.invoke(script, options, workingDir, null);
+    if (jobId != null) {
+      context.setVar(VAR_CHECK_DEFER, String.valueOf(DEFAULT_CHECK_DEFERS));
+      context.setStartData(jobId, "-", "-");
+    } else {
+      throw new ActionExecutorException(ErrorType.NON_TRANSIENT, EXT_LOST,
+                                        "Did obtain job id from qsub. Job may or not be running.");
     }
   }
 
@@ -91,18 +95,24 @@ public class SgeActionExecutor extends ActionExecutor {
     if (Qstat.running(jobId)) {
       context.setExternalStatus(EXT_RUNNING);
     } else {
-      Map<String, String> result = Qacct.done(jobId);
+      String output = Qacct.done(jobId);
 
-      if (result != null) {
+      if (output != null) {
         // Job is done
-        Properties actionData = new Properties();
-        actionData.putAll(result);
-
+        Map<String, String> result = Qacct.toMap(output);
         if (Qacct.failed(result)) {
-          context.setExecutionData(EXT_FAILED, actionData);
+          throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
+                                            EXT_FAILED,
+                                            "Job {0} completed with failure: {1}",
+                                            jobId, output);
         } else if (Qacct.exitError(result)) {
-          context.setExecutionData(EXT_EXIT_ERROR, actionData);
+          throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
+                                            EXT_EXIT_ERROR,
+                                            "Job {0} completed with abnormal exit code: {1}",
+                                            jobId, output);
         } else {
+          Properties actionData = new Properties();
+          actionData.putAll(result);
           context.setExecutionData(EXT_SUCCESSFUL, actionData);
         }
       } else if (canDefer(context)) {
@@ -110,7 +120,10 @@ public class SgeActionExecutor extends ActionExecutor {
         context.setExternalStatus(EXT_RUNNING);
       } else {
         // Job may be done or lost, call it lost
-        context.setExecutionData(EXT_LOST, null);
+        throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
+                                          EXT_LOST,
+                                          "Cannot locate status of job id {0}. Job may or not be running.",
+                                          jobId);
       }
     }
   }
