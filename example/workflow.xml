@@ -19,9 +19,9 @@
     <start to="sge"/>
 
     <action name="sge">
-        <sge xmlns="uri:oozie:sge-action:0.1">
+        <sge xmlns="uri:oozie:sge-action:1.0">
           <script>/var/example/task.sh</script>
-          <working-directory>/var/example</working-directory>
+          <options-file>/var/example/options.sh</options-file>
         </sge>
         <ok to="end"/>
         <error to="fail"/>
