@@ -8,7 +8,6 @@
     <sequence>
       <element name="script" type="string" minOccurs="1" maxOccurs="1" />
       <element name="options-file" type="string" minOccurs="0" maxOccurs="1" />
-      <element name="working-directory" type="string" minOccurs="1" maxOccurs="1" />
     </sequence>
   </complexType>
 
