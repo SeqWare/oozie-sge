@@ -23,49 +23,53 @@ public class Qsub {
    * Function to invoke qsub. If no options file is provided, the following args
    * are included by default: <code>-b y -cwd</code>
    * 
+   * @param asUser
+   *          the user invoking qsub
    * @param script
    *          the script to pass to qsub
    * @param options
    *          the options file to pass to qsub, or null
-   * @param workingDir
-   *          the working directory of the invocation, or null
    * @param environment
    *          any environment variables, or null
    * @return the jobId, or null if the qsub invocation failed
    */
-  public static String invoke(File script, File options, File workingDir,
+  public static String invoke(String asUser, File script, File options,
                               Map<Object, Object> environment) {
-    return invoke("qsub", script, options, workingDir, environment);
+    return invoke("qsub", asUser, script, options, environment);
   }
 
   // package-private for testing
-  static String invoke(String qsubCommand, File script, File options,
-                       File workingDir, Map<Object, Object> environment) {
+  static String invoke(String qsubCommand, String asUser, File script,
+                       File options, Map<Object, Object> environment) {
 
-    log.debug("Qsub.invoke: {0}, {1}, {2}", qsubCommand, script, workingDir);
+    log.debug("Qsub.invoke: {0}, {1}, {2}, {3}", qsubCommand, asUser, script, options);
 
     if (script == null) {
       throw new IllegalArgumentException("Missing script file.");
+    } else if (!script.isAbsolute()) {
+      throw new IllegalArgumentException("Script file must be specified with an absolute path.");
     }
 
-    // Ensure relative files are rooted from the specified working directory,
-    // since CommandLine will otherwise extract an absolute path using the
-    // current working directory.
-    if (!script.isAbsolute() && workingDir != null) {
-      script = new File(workingDir, script.getPath());
-    }
-    if (options != null && options.isAbsolute() && workingDir != null) {
-      options = new File(workingDir, options.getPath());
+    if (options != null && !options.isAbsolute()) {
+      throw new IllegalArgumentException("Options file must be specified with an absolute path.");
     }
 
     Map<String, Object> subst = new HashMap<String, Object>();
     subst.put("script", script);
     subst.put("options", options);
 
-    CommandLine qsub = new CommandLine(qsubCommand);
+    CommandLine qsub;
+    if (asUser != null) {
+      qsub = new CommandLine("sudo");
+      qsub.addArgument("-u");
+      qsub.addArgument(asUser);
+      qsub.addArgument(qsubCommand);
+    } else {
+      qsub = new CommandLine(qsubCommand);
+    }
+
     qsub.setSubstitutionMap(subst);
     if (options == null) {
-      qsub.addArgument("-cwd");
       qsub.addArgument("-b");
       qsub.addArgument("y");
     } else {
@@ -74,13 +78,7 @@ public class Qsub {
     }
     qsub.addArgument("${script}");
 
-    log.error("User {0} invoking command: {1}",
-              System.getProperty("user.name"), qsub);
-
     Executor exec = new DefaultExecutor();
-    if (workingDir != null) {
-      exec.setWorkingDirectory(workingDir);
-    }
 
     // Capture the output for parsing
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -89,6 +87,7 @@ public class Qsub {
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
 
     try {
+      log.debug("Executing command: {0}", qsub);
       exec.execute(qsub, environment, handler);
       handler.waitFor();
     } catch (InterruptedException e) {

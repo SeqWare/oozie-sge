@@ -8,23 +8,22 @@ import junit.framework.TestCase;
 public class QacctTest extends TestCase {
   
   public void testChecks(){
+    Result result;
+    Map<String, String> m;
 
-    String output;
-    Map<String, String> result;
-    
-    output = Qacct.done(new File("src/test/bin/qacct-ok").getAbsolutePath(), "12345");
-    result  = Qacct.toMap(output);
-    assertFalse(Qacct.failed(result));
-    assertFalse(Qacct.exitError(result));
-    
-    output = Qacct.done(new File("src/test/bin/qacct-failed").getAbsolutePath(), "12345");
-    result  = Qacct.toMap(output);
-    assertTrue(Qacct.failed(result));
-    assertFalse(Qacct.exitError(result));
-    
-    output = Qacct.done(new File("src/test/bin/qacct-exit-error").getAbsolutePath(), "12345");
-    result  = Qacct.toMap(output);
-    assertFalse(Qacct.failed(result));
-    assertTrue(Qacct.exitError(result));
+    result = Qacct.invoke(new File("src/test/bin/qacct-ok").getAbsolutePath(), "12345");
+    m  = Qacct.toMap(result.output);
+    assertFalse(Qacct.isFailed(m));
+    assertFalse(Qacct.isExitError(m));
+
+    result = Qacct.invoke(new File("src/test/bin/qacct-failed").getAbsolutePath(), "12345");
+    m  = Qacct.toMap(result.output);
+    assertTrue(Qacct.isFailed(m));
+    assertFalse(Qacct.isExitError(m));
+
+    result = Qacct.invoke(new File("src/test/bin/qacct-exit-error").getAbsolutePath(), "12345");
+    m  = Qacct.toMap(result.output);
+    assertFalse(Qacct.isFailed(m));
+    assertTrue(Qacct.isExitError(m));
   }
 }

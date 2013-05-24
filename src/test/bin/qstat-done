@@ -1,2 +1,3 @@
 echo "Following jobs do not exist:" 
 echo "11687"
+exit 1;

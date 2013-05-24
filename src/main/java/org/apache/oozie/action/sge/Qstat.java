@@ -15,20 +15,20 @@ public class Qstat {
   private static final XLog log = XLog.getLog(Qstat.class);
 
   /**
-   * Function indicating whether a job is known to be running.
+   * Invokes qstat for the specified job, returning the output.
    * 
    * @param jobId
-   *          the job
-   * @return true if the job is running, false otherwise
+   *          the job id
+   * @return the output from executing qstat
    */
-  public static boolean running(String jobId) {
-    return running("qstat", jobId);
+  public static Result invoke(String jobId) {
+    return invoke("qstat", jobId);
   }
 
   // package-private for testing
-  static boolean running(String qstatCommand, String jobId) {
+  static Result invoke(String qstatCommand, String jobId) {
 
-    log.debug("Qstat.running: {0}, {1}", qstatCommand, jobId);
+    log.debug("Qstat.invoke: {0}, {1}", qstatCommand, jobId);
 
     if (jobId == null) {
       throw new IllegalArgumentException("Missing job ID.");
@@ -59,19 +59,19 @@ public class Qstat {
       throw new RuntimeException(e);
     }
 
-    int exitVal = handler.getExitValue();
-    log.debug("Exit value from qstat: {0}", exitVal);
-    log.debug("Exit output from qstat: {0}", out);
+    int exit = handler.getExitValue();
+    String output = out.toString();
+    log.debug("Exit value from qstat: {0}", exit);
+    log.debug("Exit output from qstat: {0}", output);
+    return new Result(exit, output);
+  }
 
-    // TODO: check output as well
-    if (exitVal == 0) {
-      return true;
-    } else if (exitVal == 1) {
-      return false;
-    } else {
-      throw new RuntimeException("Unexpected exit value from qstat: " + exitVal
-          + " output: " + out.toString());
-    }
+  public static boolean isRunning(Result result){
+    return result.exit == 0;
+  }
+
+  public static boolean isErrorState(Result result){
+    return result.output.contains("Job is in error state");
   }
 
 }

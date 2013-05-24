@@ -24,6 +24,7 @@ public class SgeActionExecutor extends ActionExecutor {
   public static final String EXT_SUCCESSFUL = "successful";
   public static final String EXT_EXIT_ERROR = "exit_error";
   public static final String EXT_FAILED = "failed";
+  public static final String EXT_STUCK = "stuck";
   public static final String EXT_LOST = "lost";
   public static final String VAR_CHECK_DEFER = "checkDefer";
   public static final int DEFAULT_CHECK_DEFERS = 3;
@@ -31,7 +32,8 @@ public class SgeActionExecutor extends ActionExecutor {
   private static final Set<String> COMPLETED;
   static {
     Set<String> s = new HashSet<String>();
-    Collections.addAll(s, EXT_SUCCESSFUL, EXT_EXIT_ERROR, EXT_FAILED, EXT_LOST);
+    Collections.addAll(s, EXT_SUCCESSFUL, EXT_STUCK, EXT_EXIT_ERROR,
+                       EXT_FAILED, EXT_LOST);
     COMPLETED = Collections.unmodifiableSet(s);
   }
 
@@ -61,14 +63,14 @@ public class SgeActionExecutor extends ActionExecutor {
     Namespace ns = root.getNamespace();
 
     String sScript = root.getChildTextTrim("script", ns);
-    String sWorkingDir = root.getChildTextTrim("working-directory", ns);
     String sOptions = root.getChildTextTrim("options-file", ns);
 
     File script = new File(sScript);
-    File workingDir = new File(sWorkingDir);
     File options = sOptions == null ? null : new File(sOptions);
 
-    String jobId = Qsub.invoke(script, options, workingDir, null);
+    String asUser = context.getWorkflow().getUser();
+
+    String jobId = Qsub.invoke(asUser, script, options, null);
     if (jobId != null) {
       context.setVar(VAR_CHECK_DEFER, String.valueOf(DEFAULT_CHECK_DEFERS));
       context.setStartData(jobId, "-", "-");
@@ -88,55 +90,76 @@ public class SgeActionExecutor extends ActionExecutor {
     }
   }
 
+  public static Properties toProps(Result res) {
+    Properties props = new Properties();
+    props.setProperty("exit", Integer.toString(res.exit));
+    props.setProperty("output", res.output);
+    return props;
+  }
+
+  public static Properties toProps(Map<String, String> m) {
+    Properties props = new Properties();
+    props.putAll(m);
+    return props;
+  }
+
   @Override
   public void check(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.check: {0}", action.getId());
     String jobId = action.getExternalId();
-    if (Qstat.running(jobId)) {
-      context.setExternalStatus(EXT_RUNNING);
-    } else {
-      String output = Qacct.done(jobId);
 
-      if (output != null) {
+    String externalStatus;
+    Properties props = null;
+
+    Result result = Qstat.invoke(jobId);
+    if (Qstat.isRunning(result)) {
+      if (Qstat.isErrorState(result)) {
+        externalStatus = EXT_STUCK;
+        props = toProps(result);
+      } else {
+        externalStatus = EXT_RUNNING;
+      }
+    } else {
+      result = Qacct.invoke(jobId);
+      if (Qacct.isDone(result)) {
         // Job is done
-        Map<String, String> result = Qacct.toMap(output);
-        if (Qacct.failed(result)) {
-          throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
-                                            EXT_FAILED,
-                                            "Job {0} completed with failure: {1}",
-                                            jobId, output);
-        } else if (Qacct.exitError(result)) {
-          throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
-                                            EXT_EXIT_ERROR,
-                                            "Job {0} completed with abnormal exit code: {1}",
-                                            jobId, output);
+        Map<String, String> m = Qacct.toMap(result.output);
+        props = toProps(m);
+        if (Qacct.isFailed(m)) {
+          externalStatus = EXT_FAILED;
+        } else if (Qacct.isExitError(m)) {
+          externalStatus = EXT_EXIT_ERROR;
         } else {
-          Properties actionData = new Properties();
-          actionData.putAll(result);
-          context.setExecutionData(EXT_SUCCESSFUL, actionData);
+          externalStatus = EXT_SUCCESSFUL;
         }
       } else if (canDefer(context)) {
         // Job may be done or lost, put off declaring it lost
-        context.setExternalStatus(EXT_RUNNING);
+        externalStatus = EXT_RUNNING;
       } else {
         // Job may be done or lost, call it lost
-        throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
-                                          EXT_LOST,
-                                          "Cannot locate status of job id {0}. Job may or not be running.",
-                                          jobId);
+        externalStatus = EXT_LOST;
       }
+    }
+
+    log.debug("Sge.check externalStatus: {0}", externalStatus);
+    if (isCompleted(externalStatus)){
+      context.setExecutionData(externalStatus, props);
+    } else{
+      context.setExternalStatus(externalStatus);
     }
   }
 
   @Override
   public boolean isCompleted(String externalStatus) {
+    log.debug("Sge.isCompleted: {0}", externalStatus);
     return COMPLETED.contains(externalStatus);
   }
 
   @Override
   public void end(Context context, WorkflowAction action) throws ActionExecutorException {
-    log.debug("Sge.end: {0}", action.getId());
-    if (action.getExternalStatus().equals(EXT_SUCCESSFUL)) {
+    log.debug("Sge.end: {0}, {1}", action.getId(), action.getExternalStatus());
+    String s = action.getExternalStatus();
+    if (s.equals(EXT_SUCCESSFUL)) {
       context.setEndData(Status.OK, Status.OK.toString());
     } else {
       context.setEndData(Status.ERROR, Status.ERROR.toString());

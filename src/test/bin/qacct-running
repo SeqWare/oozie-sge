@@ -1,1 +1,2 @@
 echo "error: job id 11688 not found"
+exit 1;

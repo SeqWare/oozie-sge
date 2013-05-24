@@ -19,20 +19,20 @@ public class Qacct {
   private static final XLog log = XLog.getLog(Qacct.class);
 
   /**
-   * Function for invoking qacct for a specific job.
+   * Invokes qacct for the specified job, returning the output.
    * 
    * @param jobId
    *          the job to query
    * @return the output of qacct, or null if qacct exited abnormally
    */
-  public static String done(String jobId) {
-    return done("qacct", jobId);
+  public static Result invoke(String jobId) {
+    return invoke("qacct", jobId);
   }
 
   // package-private for testing
-  static String done(String qacctCommand, String jobId) {
+  static Result invoke(String qacctCommand, String jobId) {
 
-    log.debug("Qacct.done: {0}, {1}", qacctCommand, jobId);
+    log.debug("Qacct.invoke: {0}, {1}", qacctCommand, jobId);
 
     if (jobId == null) {
       throw new IllegalArgumentException("Missing job ID.");
@@ -62,19 +62,17 @@ public class Qacct {
       throw new RuntimeException(e);
     }
 
-    int exitVal = handler.getExitValue();
-    log.debug("Exit value from qacct: {0}", exitVal);
-    log.debug("Exit output from qacct: {0}", out);
+    int exit = handler.getExitValue();
+    String output = out.toString();
 
-    // TODO: check output as well
-    if (exitVal == 0) {
-      return out.toString();
-    } else if (exitVal == 1) {
-      return null;
-    } else {
-      throw new RuntimeException("Unexpected exit value from qacct: " + exitVal
-          + " output: " + out.toString());
-    }
+    log.debug("Exit value from qacct: {0}", exit);
+    log.debug("Exit output from qacct: {0}", output);
+
+    return new Result(exit, output);
+  }
+
+  public static boolean isDone(Result result) {
+    return result.exit == 0;
   }
 
   /**
@@ -86,7 +84,7 @@ public class Qacct {
    * @return true if the script exited abnormally, false otherwise
    * @see {{@link #toMap(String)}
    */
-  public static boolean exitError(Map<String, String> result) {
+  public static boolean isExitError(Map<String, String> result) {
     String exit = result.get("exit_status");
     log.debug("exit_status: {0}", exit);
     return !"0".equals(exit);
@@ -100,7 +98,7 @@ public class Qacct {
    * @return true if the job failed, false otherwise
    * @see {{@link #toMap(String)}
    */
-  public static boolean failed(Map<String, String> result) {
+  public static boolean isFailed(Map<String, String> result) {
     String failed = result.get("failed");
     log.debug("failed: {0}", failed);
     return !"0".equals(failed);
