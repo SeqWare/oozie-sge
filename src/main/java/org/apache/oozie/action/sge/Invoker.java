@@ -9,6 +9,17 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 public class Invoker {
+  
+  public static class Result {
+    public final int exit;
+    public final String output;
+
+    public Result(int exit, String output) {
+      this.exit = exit;
+      this.output = output;
+    }
+  }
+
 
   public static Result invoke(CommandLine command) {
     Executor exec = new DefaultExecutor();

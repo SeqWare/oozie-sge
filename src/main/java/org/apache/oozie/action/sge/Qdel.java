@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.exec.CommandLine;
+import org.apache.oozie.action.sge.Invoker.Result;
 import org.apache.oozie.util.XLog;
 
 public class Qdel {
@@ -32,8 +33,8 @@ public class Qdel {
 
     Result result = Invoker.invoke(command);
 
-    log.debug("Exit value from dqel: {0}", result.exit);
-    log.debug("Exit output from dqel: {0}", result.output);
+    log.debug("Exit value from qdel: {0}", result.exit);
+    log.debug("Exit output from qdel: {0}", result.output);
   }
 
 }

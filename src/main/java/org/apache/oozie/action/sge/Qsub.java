@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.exec.CommandLine;
+import org.apache.oozie.action.sge.Invoker.Result;
 import org.apache.oozie.util.XLog;
 
 public class Qsub {

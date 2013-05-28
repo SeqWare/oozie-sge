@@ -3,6 +3,8 @@ package org.apache.oozie.action.sge;
 import java.io.File;
 import java.util.Map;
 
+import org.apache.oozie.action.sge.Invoker.Result;
+
 import junit.framework.TestCase;
 
 public class QacctTest extends TestCase {

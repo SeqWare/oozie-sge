@@ -7,6 +7,7 @@ import java.util.Properties;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
+import org.apache.oozie.action.sge.StatusChecker.Result;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.util.XLog;
@@ -17,44 +18,6 @@ import org.jdom.Namespace;
 
 public class SgeActionExecutor extends ActionExecutor {
   public static final String ACTION_TYPE = "sge";
-
-  public enum ExtStatus {
-    /**
-     * No job ID was obtained when calling qsub.
-     */
-    NO_JOB_ID,
-
-    /**
-     * Job appears to be running.
-     */
-    RUNNING,
-
-    /**
-     * Job is stuck in error state; check qstat -j [jobId]
-     */
-    STUCK,
-
-    /**
-     * The job could not be found via qstat nor qacct; job state is not known,
-     * may be running/completed/etc.
-     */
-    LOST,
-
-    /**
-     * Job script completed, yielding a non-zero exit status code.
-     */
-    EXIT_ERROR,
-
-    /**
-     * Job failed, yielding a non-zero failed status code.
-     */
-    FAILED,
-
-    /**
-     * Job script completed with zero exit and failed status codes.
-     */
-    SUCCESSFUL
-  }
 
   private static final XLog log = XLog.getLog(SgeActionExecutor.class);
 
@@ -89,13 +52,13 @@ public class SgeActionExecutor extends ActionExecutor {
 
     String asUser = context.getWorkflow().getUser();
 
-    Result result = Qsub.invoke(asUser, script, options, null);
+    Invoker.Result result = Qsub.invoke(asUser, script, options, null);
     String jobId = Qsub.getJobId(result);
     if (jobId != null) {
       context.setStartData(jobId, "-", "-");
     } else {
       throw new ActionExecutorException(ErrorType.NON_TRANSIENT,
-                                        ExtStatus.NO_JOB_ID.toString(),
+                                        JobStatus.NO_JOB_ID.toString(),
                                         result.output);
     }
   }
@@ -118,49 +81,21 @@ public class SgeActionExecutor extends ActionExecutor {
     log.debug("Sge.check: {0}", action.getId());
     String jobId = action.getExternalId();
 
-    ExtStatus externalStatus;
-    Properties props = null;
+    Result result = StatusChecker.check(jobId);
+    String externalStatus = result.status.toString();
 
-    Result result = Qstat.invoke(jobId);
-    if (Qstat.isRunning(result)) {
-      if (Qstat.isErrorState(result)) {
-        externalStatus = ExtStatus.STUCK;
-        props = toProps(result);
-      } else {
-        externalStatus = ExtStatus.RUNNING;
-      }
-    } else {
-      result = Qacct.invoke(jobId);
-      if (Qacct.isDone(result)) {
-        // Job is done
-        Map<String, String> m = Qacct.toMap(result.output);
-        props = toProps(m);
-        if (Qacct.isFailed(m)) {
-          externalStatus = ExtStatus.FAILED;
-        } else if (Qacct.isExitError(m)) {
-          externalStatus = ExtStatus.EXIT_ERROR;
-        } else {
-          externalStatus = ExtStatus.SUCCESSFUL;
-        }
-      } else {
-        // Job may be done or lost, call it lost
-        externalStatus = ExtStatus.LOST;
-      }
-    }
+    log.debug("Sge.check externalStatus: {0}", result.status);
 
-    log.debug("Sge.check externalStatus: {0}", externalStatus);
-
-    switch (externalStatus) {
+    switch (result.status) {
     case SUCCESSFUL:
     case EXIT_ERROR:
     case FAILED:
     case STUCK:
-      context.setExecutionData(externalStatus.toString(), props);
+      context.setExecutionData(externalStatus, toProps(result));
       break;
     case LOST:
-      throw new ActionExecutorException(ErrorType.TRANSIENT,
-                                        externalStatus.toString(),
-                                        externalStatus.toString());
+      throw new ActionExecutorException(ErrorType.TRANSIENT, externalStatus,
+                                        externalStatus);
     case RUNNING:
       context.setExternalStatus(externalStatus.toString());
       break;
@@ -173,7 +108,7 @@ public class SgeActionExecutor extends ActionExecutor {
   @Override
   public boolean isCompleted(String externalStatus) {
     log.debug("Sge.isCompleted: {0}", externalStatus);
-    switch (ExtStatus.valueOf(externalStatus)) {
+    switch (JobStatus.valueOf(externalStatus)) {
     case SUCCESSFUL:
     case EXIT_ERROR:
     case FAILED:
@@ -187,7 +122,7 @@ public class SgeActionExecutor extends ActionExecutor {
   public void end(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.end: {0}, {1}", action.getId(), action.getExternalStatus());
     String s = action.getExternalStatus();
-    if (ExtStatus.SUCCESSFUL.toString().equals(s)) {
+    if (JobStatus.SUCCESSFUL.toString().equals(s)) {
       context.setEndData(Status.OK, Status.OK.toString());
     } else {
       context.setEndData(Status.ERROR, Status.ERROR.toString());
