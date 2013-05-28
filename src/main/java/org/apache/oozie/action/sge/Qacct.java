@@ -1,16 +1,11 @@
 package org.apache.oozie.action.sge;
 
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.oozie.util.XLog;
 
 public class Qacct {
@@ -46,29 +41,12 @@ public class Qacct {
     subst.put("jobId", jobId);
     command.setSubstitutionMap(subst);
 
-    Executor exec = new DefaultExecutor();
+    Result result = Invoker.invoke(command);
 
-    // Capture the output for parsing
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    exec.setStreamHandler(new PumpStreamHandler(out));
+    log.debug("Exit value from qacct: {0}", result.exit);
+    log.debug("Exit output from qacct: {0}", result.output);
 
-    DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
-    try {
-      exec.execute(command, handler);
-      handler.waitFor();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    int exit = handler.getExitValue();
-    String output = out.toString();
-
-    log.debug("Exit value from qacct: {0}", exit);
-    log.debug("Exit output from qacct: {0}", output);
-
-    return new Result(exit, output);
+    return result;
   }
 
   public static boolean isDone(Result result) {

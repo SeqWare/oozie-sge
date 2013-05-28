@@ -1,6 +1,5 @@
 package org.apache.oozie.action.sge;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,10 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.oozie.util.XLog;
 
 public class Qsub {
@@ -31,15 +26,16 @@ public class Qsub {
    *          the options file to pass to qsub, or null
    * @param environment
    *          any environment variables, or null
-   * @return the jobId, or null if the qsub invocation failed
+   * @return the output from executing qsub
+   * @see {@link #getJobId(Result)}
    */
-  public static String invoke(String asUser, File script, File options,
+  public static Result invoke(String asUser, File script, File options,
                               Map<Object, Object> environment) {
     return invoke("qsub", asUser, script, options, environment);
   }
 
   // package-private for testing
-  static String invoke(String qsubCommand, String asUser, File script,
+  static Result invoke(String qsubCommand, String asUser, File script,
                        File options, Map<Object, Object> environment) {
 
     log.debug("Qsub.invoke: {0}, {1}, {2}, {3}", qsubCommand, asUser, script, options);
@@ -78,40 +74,31 @@ public class Qsub {
     }
     qsub.addArgument("${script}");
 
-    Executor exec = new DefaultExecutor();
+    Result result = Invoker.invoke(qsub);
 
-    // Capture the output for parsing
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    exec.setStreamHandler(new PumpStreamHandler(out));
+    log.debug("Exit value from qsub: {0}", result.exit);
+    log.debug("Exit output from qsub: {0}", result.output);
 
-    DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
+    return result;
+  }
 
-    try {
-      log.debug("Executing command: {0}", qsub);
-      exec.execute(qsub, environment, handler);
-      handler.waitFor();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-    int exitVal = handler.getExitValue();
-    if (exitVal == 0) {
-      String output = out.toString();
-      log.debug("Exit output from qsub: {0}", output);
-      Matcher m = QSUB_JOB_ID.matcher(output);
+  /**
+   * Extracts the job id from the result, or null if no job id exists.
+   * @param result the result of invoking qsub
+   * @return the job id, or null
+   */
+  public static String getJobId(Result result){
+    if (result.exit == 0) {
+      Matcher m = QSUB_JOB_ID.matcher(result.output);
       if (m.find()) {
         String jobId = m.group(1);
         log.debug("Job ID: {0}", jobId);
         return jobId;
       } else {
-        log.error("Could not extract job ID from qsub output: {0}", output);
+        log.error("Could not extract job ID from qsub output: {0}", result.output);
         return null;
       }
     } else {
-      log.error("Exit value from qsub: {0}", exitVal);
-      log.error("Exit output from qsub: {0}", out);
       return null;
     }
   }
