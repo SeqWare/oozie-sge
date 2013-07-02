@@ -36,6 +36,8 @@ public class Invoker {
       handler.waitFor();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
