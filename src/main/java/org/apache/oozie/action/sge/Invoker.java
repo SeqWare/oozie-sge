@@ -7,9 +7,11 @@ import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.oozie.util.XLog;
 
 public class Invoker {
-  
+  private static final XLog log = XLog.getLog(Invoker.class);
+
   public static class Result {
     public final int exit;
     public final String output;
@@ -20,7 +22,6 @@ public class Invoker {
     }
   }
 
-
   public static Result invoke(CommandLine command) {
     Executor exec = new DefaultExecutor();
 
@@ -30,6 +31,7 @@ public class Invoker {
 
     DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
     try {
+      log.debug("Invoking command: {0}", command);
       exec.execute(command, handler);
       handler.waitFor();
     } catch (InterruptedException e) {
