@@ -56,6 +56,7 @@ public class Qsub {
     CommandLine qsub;
     if (asUser != null) {
       qsub = new CommandLine("sudo");
+      qsub.addArgument("-i");
       qsub.addArgument("-u");
       qsub.addArgument(asUser);
       qsub.addArgument(qsubCommand);
@@ -79,10 +80,11 @@ public class Qsub {
       log.error("Exit value from qsub: {0}", result.exit);
       log.error("Exit output from qsub: {0}", result.output);
 
-      // Help the admins configure the oozie user correctly...
+      // Help the admins configure things correctly...
       CommandLine env;
       if (asUser != null) {
         env = new CommandLine("sudo");
+        qsub.addArgument("-i");
         env.addArgument("-u");
         env.addArgument(asUser);
         env.addArgument("env");
