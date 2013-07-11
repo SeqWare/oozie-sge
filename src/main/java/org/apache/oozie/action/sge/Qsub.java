@@ -30,14 +30,12 @@ public class Qsub {
    * @return the output from executing qsub
    * @see {@link #getJobId(Result)}
    */
-  public static Result invoke(String asUser, File script, File options,
-                              Map<Object, Object> environment) {
+  public static Result invoke(String asUser, File script, File options, Map<Object, Object> environment) {
     return invoke("qsub", asUser, script, options, environment);
   }
 
   // package-private for testing
-  static Result invoke(String qsubCommand, String asUser, File script,
-                       File options, Map<Object, Object> environment) {
+  static Result invoke(String qsubCommand, String asUser, File script, File options, Map<Object, Object> environment) {
 
     log.debug("Qsub.invoke: {0}, {1}, {2}, {3}", qsubCommand, asUser, script, options);
 
@@ -77,18 +75,38 @@ public class Qsub {
 
     Result result = Invoker.invoke(qsub);
 
-    log.debug("Exit value from qsub: {0}", result.exit);
-    log.debug("Exit output from qsub: {0}", result.output);
+    if (result.exit != 0) {
+      log.error("Exit value from qsub: {0}", result.exit);
+      log.error("Exit output from qsub: {0}", result.output);
+
+      // Help the admins configure the oozie user correctly...
+      CommandLine env;
+      if (asUser != null) {
+        env = new CommandLine("sudo");
+        env.addArgument("-u");
+        env.addArgument(asUser);
+        env.addArgument("env");
+      } else {
+        env = new CommandLine("env");
+      }
+      Result envres = Invoker.invoke(env);
+      log.error("Displaying environment: \n{0}", envres.output);
+    } else {
+      log.debug("Exit value from qsub: {0}", result.exit);
+      log.debug("Exit output from qsub: {0}", result.output);
+    }
 
     return result;
   }
 
   /**
    * Extracts the job id from the result, or null if no job id exists.
-   * @param result the result of invoking qsub
+   * 
+   * @param result
+   *          the result of invoking qsub
    * @return the job id, or null
    */
-  public static String getJobId(Result result){
+  public static String getJobId(Result result) {
     if (result.exit == 0) {
       Matcher m = QSUB_JOB_ID.matcher(result.output);
       if (m.find()) {
