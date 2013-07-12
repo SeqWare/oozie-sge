@@ -1,10 +1,11 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
+
+import io.seqware.oozie.action.sge.Invoker.Result;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.exec.CommandLine;
-import org.apache.oozie.action.sge.Invoker.Result;
 import org.apache.oozie.util.XLog;
 
 public class Qstat {

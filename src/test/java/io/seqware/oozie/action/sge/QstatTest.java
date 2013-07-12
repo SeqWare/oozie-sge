@@ -1,8 +1,9 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
+
+import io.seqware.oozie.action.sge.Qstat;
+import io.seqware.oozie.action.sge.Invoker.Result;
 
 import java.io.File;
-
-import org.apache.oozie.action.sge.Invoker.Result;
 
 import junit.framework.TestCase;
 

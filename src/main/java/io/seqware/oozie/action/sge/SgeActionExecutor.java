@@ -1,4 +1,6 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
+
+import io.seqware.oozie.action.sge.StatusChecker.Result;
 
 import java.io.File;
 import java.util.Map;
@@ -7,7 +9,6 @@ import java.util.Properties;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
-import org.apache.oozie.action.sge.StatusChecker.Result;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowAction.Status;
 import org.apache.oozie.util.XLog;

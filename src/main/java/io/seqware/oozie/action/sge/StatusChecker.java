@@ -1,8 +1,8 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
+
+import io.seqware.oozie.action.sge.Invoker;
 
 import java.util.Map;
-
-import org.apache.oozie.action.sge.Invoker;
 
 public class StatusChecker {
 

@@ -1,4 +1,4 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
 
 import java.io.ByteArrayOutputStream;
 

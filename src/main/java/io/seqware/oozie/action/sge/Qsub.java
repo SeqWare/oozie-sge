@@ -1,4 +1,6 @@
-package org.apache.oozie.action.sge;
+package io.seqware.oozie.action.sge;
+
+import io.seqware.oozie.action.sge.Invoker.Result;
 
 import java.io.File;
 import java.util.HashMap;
@@ -7,7 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.exec.CommandLine;
-import org.apache.oozie.action.sge.Invoker.Result;
 import org.apache.oozie.util.XLog;
 
 public class Qsub {
