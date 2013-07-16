@@ -3,8 +3,9 @@ package io.seqware.oozie.action.sge;
 import io.seqware.oozie.action.sge.StatusChecker.Result;
 
 import java.io.File;
-import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
@@ -19,6 +20,8 @@ import org.jdom.Namespace;
 
 public class SgeActionExecutor extends ActionExecutor {
   public static final String ACTION_TYPE = "sge";
+  public static final String ENTRY_REGEX = "(?m)^(\\w+)\\s+(.+)$";
+  private static final Pattern ENTRY = Pattern.compile(ENTRY_REGEX);
 
   private static final XLog log = XLog.getLog(SgeActionExecutor.class);
 
@@ -64,16 +67,21 @@ public class SgeActionExecutor extends ActionExecutor {
     }
   }
 
-  public static Properties toProps(Result res) {
+  /**
+   * Convenience function for parsing qacct/qstat output
+   * 
+   * @param output
+   *          the output from qacct/qstat
+   * @return a map of qacct/qstat keys and their values
+   */
+  public static Properties toProps(String output) {
     Properties props = new Properties();
-    props.setProperty("exit", Integer.toString(res.exit));
-    props.setProperty("output", res.output);
-    return props;
-  }
-
-  public static Properties toProps(Map<String, String> m) {
-    Properties props = new Properties();
-    props.putAll(m);
+    Matcher m = ENTRY.matcher(output);
+    while (m.find()) {
+      String key = m.group(1);
+      String val = m.group(2).trim();
+      props.setProperty(key, val);
+    }
     return props;
   }
 
@@ -92,7 +100,7 @@ public class SgeActionExecutor extends ActionExecutor {
     case EXIT_ERROR:
     case FAILED:
     case STUCK:
-      context.setExecutionData(externalStatus, toProps(result));
+      context.setExecutionData(externalStatus, toProps(result.output));
       break;
     case LOST:
       throw new ActionExecutorException(ErrorType.TRANSIENT, externalStatus,

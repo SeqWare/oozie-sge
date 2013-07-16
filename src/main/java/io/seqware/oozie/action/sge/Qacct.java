@@ -11,8 +11,6 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.oozie.util.XLog;
 
 public class Qacct {
-  public static final String ENTRY_REGEX = "(?m)^(\\w+)\\s+(.+)$";
-  private static final Pattern ENTRY = Pattern.compile(ENTRY_REGEX);
   private static final XLog log = XLog.getLog(Qacct.class);
 
   /**
@@ -55,6 +53,10 @@ public class Qacct {
     return result.exit == 0;
   }
 
+  
+  public static final String EXIT_ERROR_REGEX = "(?m)^exit_status\\s+(.+)$";
+  private static final Pattern EXIT_ERROR = Pattern.compile(EXIT_ERROR_REGEX);
+
   /**
    * Tests whether the results indicate that the script passed to qsub yielded
    * an abnormal exit code.
@@ -64,11 +66,18 @@ public class Qacct {
    * @return true if the script exited abnormally, false otherwise
    * @see {{@link #toMap(String)}
    */
-  public static boolean isExitError(Map<String, String> result) {
-    String exit = result.get("exit_status");
-    log.debug("exit_status: {0}", exit);
+  public static boolean isExitError(Result result) {
+    String exit = null;
+    Matcher m = EXIT_ERROR.matcher(result.output);
+    if (m.find()) {
+      exit = m.group(1).trim();
+    }
     return !"0".equals(exit);
   }
+  
+  public static final String FAILED_REGEX = "(?m)^failed\\s+(.+)$";
+  private static final Pattern FAILED = Pattern.compile(FAILED_REGEX);
+
 
   /**
    * Tests whether the results indicate that the qsub job itself failed.
@@ -78,28 +87,13 @@ public class Qacct {
    * @return true if the job failed, false otherwise
    * @see {{@link #toMap(String)}
    */
-  public static boolean isFailed(Map<String, String> result) {
-    String failed = result.get("failed");
-    log.debug("failed: {0}", failed);
-    return !"0".equals(failed);
-  }
-
-  /**
-   * Convenience function for parsing qacct output into a map.
-   * 
-   * @param output
-   *          the output from qcct
-   * @return a map of qacct keys and their values
-   */
-  public static Map<String, String> toMap(String output) {
-    Map<String, String> map = new HashMap<String, String>();
-    Matcher m = ENTRY.matcher(output);
-    while (m.find()) {
-      String key = m.group(1);
-      String val = m.group(2).trim();
-      map.put(key, val);
+  public static boolean isFailed(Result result) {
+    String failed = null;
+    Matcher m = FAILED.matcher(result.output);
+    if (m.find()) {
+      failed = m.group(1).trim();
     }
-    return map;
+    return !"0".equals(failed);
   }
 
 }

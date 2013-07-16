@@ -1,8 +1,5 @@
 package io.seqware.oozie.action.sge;
 
-import io.seqware.oozie.action.sge.Invoker;
-
-import java.util.Map;
 
 public class StatusChecker {
 
@@ -29,10 +26,9 @@ public class StatusChecker {
       result = Qacct.invoke(jobId);
       if (Qacct.isDone(result)) {
         // Job is done
-        Map<String, String> m = Qacct.toMap(result.output);
-        if (Qacct.isFailed(m)) {
+        if (Qacct.isFailed(result)) {
           status = JobStatus.FAILED;
-        } else if (Qacct.isExitError(m)) {
+        } else if (Qacct.isExitError(result)) {
           status = JobStatus.EXIT_ERROR;
         } else {
           status = JobStatus.SUCCESSFUL;
