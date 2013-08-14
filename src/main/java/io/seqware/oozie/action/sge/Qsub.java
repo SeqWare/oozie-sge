@@ -79,19 +79,6 @@ public class Qsub {
     if (result.exit != 0) {
       log.error("Exit value from qsub: {0}", result.exit);
       log.error("Exit output from qsub: {0}", result.output);
-
-      // Help the admins configure things correctly...
-      CommandLine env;
-      if (asUser != null) {
-        env = new CommandLine("sudo");
-        env.addArgument("-u");
-        env.addArgument(asUser);
-        env.addArgument("env");
-      } else {
-        env = new CommandLine("env");
-      }
-      Result envres = Invoker.invoke(env);
-      log.error("Displaying environment: \n{0}", envres.output);
     } else {
       log.debug("Exit value from qsub: {0}", result.exit);
       log.debug("Exit output from qsub: {0}", result.output);
