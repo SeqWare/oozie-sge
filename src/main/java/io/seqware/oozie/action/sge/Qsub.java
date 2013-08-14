@@ -57,7 +57,6 @@ public class Qsub {
     CommandLine qsub;
     if (asUser != null) {
       qsub = new CommandLine("sudo");
-      qsub.addArgument("-i");
       qsub.addArgument("-u");
       qsub.addArgument(asUser);
       qsub.addArgument(qsubCommand);
@@ -85,7 +84,6 @@ public class Qsub {
       CommandLine env;
       if (asUser != null) {
         env = new CommandLine("sudo");
-        env.addArgument("-i");
         env.addArgument("-u");
         env.addArgument(asUser);
         env.addArgument("env");
