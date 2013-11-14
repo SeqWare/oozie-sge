@@ -1,4 +1,4 @@
-seqware-sandbox
+oozie-sge
 ===============
 
-This is a sandbox for the SeqWare project
+This is a repo for the Oozie-SGE plugin
