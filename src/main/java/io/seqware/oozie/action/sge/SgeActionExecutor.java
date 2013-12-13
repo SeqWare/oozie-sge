@@ -1,5 +1,8 @@
 package io.seqware.oozie.action.sge;
 
+import static io.seqware.oozie.action.sge.JobStatus.EXIT_ERROR;
+import static io.seqware.oozie.action.sge.JobStatus.FAILED;
+import static io.seqware.oozie.action.sge.JobStatus.STUCK;
 import io.seqware.oozie.action.sge.StatusChecker.Result;
 
 import java.io.File;
@@ -96,10 +99,13 @@ public class SgeActionExecutor extends ActionExecutor {
     log.debug("Sge.check externalStatus: {0}", result.status);
 
     switch (result.status) {
-    case SUCCESSFUL:
+    
     case EXIT_ERROR:
     case FAILED:
-    case STUCK:
+    case STUCK:      
+      context.setErrorInfo("SGE"+Qacct.getExitError(result), "SGE"+Qacct.getExitError(result));
+      // don't need to break, we still need to setExecutionData
+    case SUCCESSFUL:
       context.setExecutionData(externalStatus, toProps(result.output));
       break;
     case LOST:
