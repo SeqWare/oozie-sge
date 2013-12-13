@@ -67,11 +67,7 @@ public class Qacct {
    * @see {{@link #toMap(String)}
    */
   public static boolean isExitError(Result result) {
-    String exit = null;
-    Matcher m = EXIT_ERROR.matcher(result.output);
-    if (m.find()) {
-      exit = m.group(1).trim();
-    }
+    String exit = getExitError(result);
     return !"0".equals(exit);
   }
   
@@ -95,5 +91,21 @@ public class Qacct {
     }
     return !"0".equals(failed);
   }
+  
+  
+    /**
+     * Return the exit code from a script passed to qsub 
+     *
+     * @param result the results of {{@link #done(String)}
+     * @return exit_status
+     */
+    public static String getExitError(Result result) {
+        String exit = null;
+        Matcher m = EXIT_ERROR.matcher(result.output);
+        if (m.find()) {
+            exit = m.group(1).trim();
+        }
+        return exit;
+    }
 
 }
