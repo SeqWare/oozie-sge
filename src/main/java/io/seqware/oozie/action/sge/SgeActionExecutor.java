@@ -98,6 +98,7 @@ public class SgeActionExecutor extends ActionExecutor {
     int TOTAL_DELAY = 1000 * 60; // 60 seconds to check in total
     int delayed = 0;
     result = StatusChecker.check(jobId);
+    log.debug("Sge.check externalStatus: {0}", result.status);
     while (result.status == JobStatus.LOST && delayed < TOTAL_DELAY){
         delayed += SKIP_DELAY;
         try {
