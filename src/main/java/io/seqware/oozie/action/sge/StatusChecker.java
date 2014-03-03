@@ -34,8 +34,8 @@ public class StatusChecker {
           status = JobStatus.SUCCESSFUL;
         }
       } else {
-        // Job may be done or lost, call it lost
-        status = JobStatus.LOST;
+        // Job may be done or lost, call it done (to avoid issues with qacct on non-master nodes)
+        status = JobStatus.SUCCESSFUL;
       }
     }
 
