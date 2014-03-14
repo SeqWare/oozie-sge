@@ -93,10 +93,23 @@ public class SgeActionExecutor extends ActionExecutor {
     log.debug("Sge.check: {0}", action.getId());
     String jobId = action.getExternalId();
 
-    Result result = StatusChecker.check(jobId);
-    String externalStatus = result.status.toString();
-
+    Result result;
+    int SKIP_DELAY = 1000 * 5; // 5 seconds delay per check
+    int TOTAL_DELAY = 1000 * 60; // 60 seconds to check in total
+    int delayed = 0;
+    result = StatusChecker.check(jobId);
     log.debug("Sge.check externalStatus: {0}", result.status);
+    while (result.status == JobStatus.LOST && delayed < TOTAL_DELAY){
+        delayed += SKIP_DELAY;
+        try {
+            Thread.sleep(SKIP_DELAY);
+        } catch (InterruptedException ex) {
+            throw new IllegalStateException("Sge.check delay interrupted", ex);
+        }
+        result = StatusChecker.check(jobId);
+        log.debug("Sge.check externalStatus: {0}", result.status);
+    }
+    String externalStatus = result.status.toString();
 
     switch (result.status) {
     
@@ -147,7 +160,8 @@ public class SgeActionExecutor extends ActionExecutor {
   @Override
   public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.kill: {0}", action.getId());
-    Qdel.invoke(action.getExternalId());
+    String asUser = context.getWorkflow().getUser();
+    Qdel.invoke(asUser, action.getExternalId());
     context.setEndData(Status.KILLED, Status.KILLED.toString());
   }
 

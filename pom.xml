@@ -4,7 +4,7 @@
 
   <groupId>io.seqware</groupId>
   <artifactId>oozie-sge</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <packaging>jar</packaging>
 
   <name>oozie-sge</name>
@@ -12,7 +12,23 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <github.url>scm:git:git@github.com:SeqWare/oozie-sge.git</github.url>
   </properties>
+
+  <scm>
+        <connection>${github.url}</connection>
+        <developerConnection>${github.url}</developerConnection>
+        <url>${github.url}</url>
+  </scm>
+  
+  <distributionManagement>
+        <repository>
+            <id>wrench.res.oicr.on.ca</id>
+            <name>wrench.res.oicr.on.ca-seqware-dependencies</name>
+            <url>http://seqwaremaven.oicr.on.ca/artifactory/seqware-dependencies</url>
+            <uniqueVersion>false</uniqueVersion>
+        </repository>
+  </distributionManagement>
   
   <repositories>
     <repository>
@@ -68,7 +84,7 @@
     <dependency>
       <groupId>org.apache.oozie</groupId>
       <artifactId>oozie-core</artifactId>
-      <version>3.3.2-cdh4.3.1</version>
+      <version>3.3.2-cdh4.5.0</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
@@ -80,7 +96,7 @@
     <dependency>
       <groupId>org.apache.oozie</groupId>
       <artifactId>oozie-client</artifactId>
-      <version>3.3.2-cdh4.3.1</version>
+      <version>3.3.2-cdh4.5.0</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
