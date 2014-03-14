@@ -160,7 +160,8 @@ public class SgeActionExecutor extends ActionExecutor {
   @Override
   public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
     log.debug("Sge.kill: {0}", action.getId());
-    Qdel.invoke(action.getExternalId());
+    String asUser = context.getWorkflow().getUser();
+    Qdel.invoke(asUser, action.getExternalId());
     context.setEndData(Status.KILLED, Status.KILLED.toString());
   }
 

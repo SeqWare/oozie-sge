@@ -14,28 +14,37 @@ public class Qdel {
   /**
    * Function to invoke qdel.
    * 
-   * @param jobId
-   *          the job to delete
+   * @param asUser the user invoking qsub
+   * @param jobId the job to delete
    */
-  public static void invoke(String jobId) {
-
-    log.debug("Qdel.invoke: {0}", jobId);
-
-    if (jobId == null) {
-      throw new IllegalArgumentException("Missing job ID.");
-    }
-
-    CommandLine command = new CommandLine("qdel");
-    command.addArgument("${jobId}");
-
-    Map<String, Object> subst = new HashMap<String, Object>();
-    subst.put("jobId", jobId);
-    command.setSubstitutionMap(subst);
-
-    Result result = Invoker.invoke(command);
-
-    log.debug("Exit value from qdel: {0}", result.exit);
-    log.debug("Exit output from qdel: {0}", result.output);
+  public static Result invoke(String asUser, String jobId) {
+    return invoke("qdel", asUser, jobId);
   }
+
+   // package-private for testing
+   static Result invoke(String qdelCommand, String asUser, String jobId) {
+        log.debug("Qdel.invoke: {0}, {1}, {2}", qdelCommand, asUser, jobId);
+        if (jobId == null) {
+            throw new IllegalArgumentException("Missing job ID.");
+        }
+        CommandLine command;
+        if (asUser != null) {
+            command = new CommandLine("sudo");
+            command.addArgument("-i");
+            command.addArgument("-u");
+            command.addArgument(asUser);
+            command.addArgument(qdelCommand);
+        } else {
+            command = new CommandLine(qdelCommand);
+        }
+        command.addArgument("${jobId}");
+        Map<String, Object> subst = new HashMap<String, Object>();
+        subst.put("jobId", jobId);
+        command.setSubstitutionMap(subst);
+        Result result = Invoker.invoke(command);
+        log.debug("Exit value from qdel: {0}", result.exit);
+        log.debug("Exit output from qdel: {0}", result.output);
+        return result;
+    }
 
 }
