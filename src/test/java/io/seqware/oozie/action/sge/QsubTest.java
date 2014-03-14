@@ -1,6 +1,5 @@
 package io.seqware.oozie.action.sge;
 
-import io.seqware.oozie.action.sge.Qsub;
 import io.seqware.oozie.action.sge.Invoker.Result;
 
 import java.io.File;
