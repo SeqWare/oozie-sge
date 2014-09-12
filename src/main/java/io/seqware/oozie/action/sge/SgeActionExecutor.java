@@ -112,18 +112,27 @@ public class SgeActionExecutor extends ActionExecutor {
 
         switch (result.status) {
 
-        case EXIT_ERROR:
-        case FAILED:
         case STUCK:
+            // seqware-1944, qdel SGE jobs that get stuck in Eqw state, user-level retry can retry if required
+            String asUser = context.getWorkflow().getUser();
+            log.debug("Sge.check qdel stuck job: {0}", action.getExternalId());
+            Qdel.invoke(asUser, action.getExternalId());
+            break;
+        case EXIT_ERROR:
             context.setErrorInfo("SGE" + Qacct.getExitError(result), "SGE" + Qacct.getExitError(result));
-            // don't need to break, we still need to setExecutionData
+            context.setExecutionData(externalStatus, toProps(result.output));
+            break;
+        case FAILED:
+            context.setErrorInfo("SGEF" + Qacct.getFailedError(result), "SGEF" + Qacct.getFailedError(result));
+            context.setExecutionData(externalStatus, toProps(result.output));
+            break;
         case SUCCESSFUL:
             context.setExecutionData(externalStatus, toProps(result.output));
             break;
         case LOST:
             throw new ActionExecutorException(ErrorType.TRANSIENT, externalStatus, externalStatus);
         case RUNNING:
-            context.setExternalStatus(externalStatus.toString());
+            context.setExternalStatus(externalStatus);
             break;
         default:
             throw new IllegalStateException("Encountered unexpected external state in check method: " + externalStatus);

@@ -10,7 +10,6 @@ import org.apache.oozie.util.XLog;
 
 public class Qstat {
 
-
     /**
      * Invokes qstat for the specified job, returning the output.
      * 
@@ -52,7 +51,7 @@ public class Qstat {
     }
 
     public static boolean isErrorState(Result result) {
-        return result.output.contains("Job is in error state");
+        return result.output.contains("error reason");
     }
 
 }

@@ -12,7 +12,6 @@ import org.apache.oozie.util.XLog;
 
 public class Qacct {
 
-
     /**
      * Invokes qacct for the specified job, returning the output.
      * 
@@ -69,7 +68,7 @@ public class Qacct {
         return !"0".equals(exit);
     }
 
-    public static final String FAILED_REGEX = "(?m)^failed\\s+(.+)$";
+    public static final String FAILED_REGEX = "(?m)^failed\\s+([0-9]+).*$";
     private static final Pattern FAILED = Pattern.compile(FAILED_REGEX);
 
     /**
@@ -81,12 +80,23 @@ public class Qacct {
      * @see {{@link #toMap(String)}
      */
     public static boolean isFailed(Result result) {
+        String failed = getFailedError(result);
+        return !"0".equals(failed);
+    }
+
+    /**
+     * Return the failed state from a qsub job itself that failed
+     * 
+     * @param result
+     * @return
+     */
+    public static String getFailedError(Result result) {
         String failed = null;
         Matcher m = FAILED.matcher(result.output);
         if (m.find()) {
             failed = m.group(1).trim();
         }
-        return !"0".equals(failed);
+        return failed;
     }
 
     /**
