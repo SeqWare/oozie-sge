@@ -15,7 +15,6 @@ public class Qsub {
 
     public static final String QSUB_JOB_ID_REGEX = "(?m)^Your job (\\S+) \\(.+\\) has been submitted$";
     private static final Pattern QSUB_JOB_ID = Pattern.compile(QSUB_JOB_ID_REGEX);
-    private static final XLog log = XLog.getLog(Qsub.class);
 
     /**
      * Function to invoke qsub. If no options file is provided, the following args are included by default: <code>-b y -cwd</code>
@@ -37,7 +36,7 @@ public class Qsub {
 
     // package-private for testing
     static Result invoke(String qsubCommand, String asUser, File script, File options, Map<Object, Object> environment) {
-
+        XLog log = XLog.getLog(Qsub.class);
         log.debug("Qsub.invoke: {0}, {1}, {2}, {3}", qsubCommand, asUser, script, options);
 
         if (script == null) {
@@ -96,6 +95,7 @@ public class Qsub {
      * @return the job id, or null
      */
     public static String getJobId(Result result) {
+        XLog log = XLog.getLog(Qsub.class);
         if (result.exit == 0) {
             Matcher m = QSUB_JOB_ID.matcher(result.output);
             if (m.find()) {

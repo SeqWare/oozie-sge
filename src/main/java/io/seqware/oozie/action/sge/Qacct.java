@@ -12,7 +12,6 @@ import org.apache.oozie.util.XLog;
 
 public class Qacct {
 
-    private static final XLog log = XLog.getLog(Qacct.class);
 
     /**
      * Invokes qacct for the specified job, returning the output.
@@ -27,7 +26,7 @@ public class Qacct {
 
     // package-private for testing
     static Result invoke(String qacctCommand, String jobId) {
-
+        XLog log = XLog.getLog(Qacct.class);
         log.debug("Qacct.invoke: {0}, {1}", qacctCommand, jobId);
 
         if (jobId == null) {

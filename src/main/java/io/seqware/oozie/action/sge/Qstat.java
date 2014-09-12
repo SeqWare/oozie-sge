@@ -10,7 +10,6 @@ import org.apache.oozie.util.XLog;
 
 public class Qstat {
 
-    private static final XLog log = XLog.getLog(Qstat.class);
 
     /**
      * Invokes qstat for the specified job, returning the output.
@@ -25,7 +24,7 @@ public class Qstat {
 
     // package-private for testing
     static Result invoke(String qstatCommand, String jobId) {
-
+        XLog log = XLog.getLog(Qstat.class);
         log.debug("Qstat.invoke: {0}, {1}", qstatCommand, jobId);
 
         if (jobId == null) {

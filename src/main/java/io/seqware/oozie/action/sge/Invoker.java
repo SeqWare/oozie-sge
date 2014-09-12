@@ -11,7 +11,6 @@ import org.apache.oozie.util.XLog;
 
 public class Invoker {
 
-    private static final XLog log = XLog.getLog(Invoker.class);
 
     public static class Result {
 
@@ -33,6 +32,7 @@ public class Invoker {
 
         DefaultExecuteResultHandler handler = new DefaultExecuteResultHandler();
         try {
+            XLog log = XLog.getLog(Invoker.class);
             log.debug("Invoking command: {0}", command);
             exec.execute(command, handler);
             handler.waitFor();

@@ -27,8 +27,6 @@ public class SgeActionExecutor extends ActionExecutor {
     public static final String ENTRY_REGEX = "(?m)^(\\w+)\\s+(.+)$";
     private static final Pattern ENTRY = Pattern.compile(ENTRY_REGEX);
 
-    private static final XLog log = XLog.getLog(SgeActionExecutor.class);
-
     public SgeActionExecutor() {
         super(ACTION_TYPE);
     }
@@ -40,6 +38,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     @Override
     public void start(Context context, WorkflowAction action) throws ActionExecutorException {
+        XLog log = XLog.getLog(getClass());
         log.debug("Sge.start: {0}", action.getId());
         String conf = action.getConf();
         log.debug("Extracted xml config: {0}", conf);
@@ -89,6 +88,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     @Override
     public void check(Context context, WorkflowAction action) throws ActionExecutorException {
+        XLog log = XLog.getLog(getClass());
         log.debug("Sge.check: {0}", action.getId());
         String jobId = action.getExternalId();
 
@@ -132,6 +132,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     @Override
     public boolean isCompleted(String externalStatus) {
+        XLog log = XLog.getLog(getClass());
         log.debug("Sge.isCompleted: {0}", externalStatus);
         switch (JobStatus.valueOf(externalStatus)) {
         case SUCCESSFUL:
@@ -145,6 +146,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     @Override
     public void end(Context context, WorkflowAction action) throws ActionExecutorException {
+        XLog log = XLog.getLog(getClass());
         log.debug("Sge.end: {0}, {1}", action.getId(), action.getExternalStatus());
         String s = action.getExternalStatus();
         if (JobStatus.SUCCESSFUL.toString().equals(s)) {
@@ -156,6 +158,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     @Override
     public void kill(Context context, WorkflowAction action) throws ActionExecutorException {
+        XLog log = XLog.getLog(getClass());
         log.debug("Sge.kill: {0}", action.getId());
         String asUser = context.getWorkflow().getUser();
         Qdel.invoke(asUser, action.getExternalId());
