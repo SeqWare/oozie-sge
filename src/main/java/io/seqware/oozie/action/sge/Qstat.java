@@ -9,50 +9,51 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.oozie.util.XLog;
 
 public class Qstat {
-  private static final XLog log = XLog.getLog(Qstat.class);
 
-  /**
-   * Invokes qstat for the specified job, returning the output.
-   * 
-   * @param jobId
-   *          the job id
-   * @return the output from executing qstat
-   */
-  public static Result invoke(String jobId) {
-    return invoke("qstat", jobId);
-  }
+    private static final XLog log = XLog.getLog(Qstat.class);
 
-  // package-private for testing
-  static Result invoke(String qstatCommand, String jobId) {
-
-    log.debug("Qstat.invoke: {0}, {1}", qstatCommand, jobId);
-
-    if (jobId == null) {
-      throw new IllegalArgumentException("Missing job ID.");
+    /**
+     * Invokes qstat for the specified job, returning the output.
+     * 
+     * @param jobId
+     *            the job id
+     * @return the output from executing qstat
+     */
+    public static Result invoke(String jobId) {
+        return invoke("qstat", jobId);
     }
 
-    CommandLine command = new CommandLine(qstatCommand);
-    command.addArgument("-j");
-    command.addArgument("${jobId}");
+    // package-private for testing
+    static Result invoke(String qstatCommand, String jobId) {
 
-    Map<String, Object> subst = new HashMap<String, Object>();
-    subst.put("jobId", jobId);
-    command.setSubstitutionMap(subst);
+        log.debug("Qstat.invoke: {0}, {1}", qstatCommand, jobId);
 
-    Result result = Invoker.invoke(command);
+        if (jobId == null) {
+            throw new IllegalArgumentException("Missing job ID.");
+        }
 
-    log.debug("Exit value from qstat: {0}", result.exit);
-    log.debug("Exit output from qstat: {0}", result.output);
+        CommandLine command = new CommandLine(qstatCommand);
+        command.addArgument("-j");
+        command.addArgument("${jobId}");
 
-    return result;
-  }
+        Map<String, Object> subst = new HashMap<String, Object>();
+        subst.put("jobId", jobId);
+        command.setSubstitutionMap(subst);
 
-  public static boolean isRunning(Result result){
-    return result.exit == 0;
-  }
+        Result result = Invoker.invoke(command);
 
-  public static boolean isErrorState(Result result){
-    return result.output.contains("Job is in error state");
-  }
+        log.debug("Exit value from qstat: {0}", result.exit);
+        log.debug("Exit output from qstat: {0}", result.output);
+
+        return result;
+    }
+
+    public static boolean isRunning(Result result) {
+        return result.exit == 0;
+    }
+
+    public static boolean isErrorState(Result result) {
+        return result.output.contains("Job is in error state");
+    }
 
 }
