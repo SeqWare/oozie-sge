@@ -4,7 +4,7 @@
 
     <groupId>io.seqware</groupId>
     <artifactId>oozie-sge</artifactId>
-    <version>1.1</version>
+    <version>1.1.2</version>
     <packaging>jar</packaging>
 
     <name>oozie-sge</name>
