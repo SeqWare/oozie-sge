@@ -9,20 +9,24 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.oozie.util.XLog;
 
 public class Qdel {
-  private static final XLog log = XLog.getLog(Qdel.class);
 
-  /**
-   * Function to invoke qdel.
-   * 
-   * @param asUser the user invoking qsub
-   * @param jobId the job to delete
-   */
-  public static Result invoke(String asUser, String jobId) {
-    return invoke("qdel", asUser, jobId);
-  }
 
-   // package-private for testing
-   static Result invoke(String qdelCommand, String asUser, String jobId) {
+    /**
+     * Function to invoke qdel.
+     * 
+     * @param asUser
+     *            the user invoking qsub
+     * @param jobId
+     *            the job to delete
+     * @return
+     */
+    public static Result invoke(String asUser, String jobId) {
+        return invoke("qdel", asUser, jobId);
+    }
+
+    // package-private for testing
+    static Result invoke(String qdelCommand, String asUser, String jobId) {
+        XLog log = XLog.getLog(Qdel.class);
         log.debug("Qdel.invoke: {0}, {1}, {2}", qdelCommand, asUser, jobId);
         if (jobId == null) {
             throw new IllegalArgumentException("Missing job ID.");
