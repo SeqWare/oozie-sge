@@ -12,7 +12,7 @@ public class StatusChecker {
         }
     }
 
-    public static Result check(String jobId) {
+    public static Result check(String jobId, String name) {
         JobStatus status;
 
         Invoker.Result result = Qstat.invoke(jobId);
@@ -23,7 +23,7 @@ public class StatusChecker {
                 status = JobStatus.RUNNING;
             }
         } else {
-            result = Qacct.invoke(jobId);
+            result = Qacct.invoke(jobId, name);
             if (Qacct.isDone(result)) {
                 // Job is done
                 if (Qacct.isFailed(result)) {

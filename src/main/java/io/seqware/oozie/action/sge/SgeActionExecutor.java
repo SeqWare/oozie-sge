@@ -4,12 +4,10 @@ import static io.seqware.oozie.action.sge.JobStatus.EXIT_ERROR;
 import static io.seqware.oozie.action.sge.JobStatus.FAILED;
 import static io.seqware.oozie.action.sge.JobStatus.STUCK;
 import io.seqware.oozie.action.sge.StatusChecker.Result;
-
 import java.io.File;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.ActionExecutorException.ErrorType;
@@ -70,7 +68,7 @@ public class SgeActionExecutor extends ActionExecutor {
 
     /**
      * Convenience function for parsing qacct/qstat output
-     * 
+     *
      * @param output
      *            the output from qacct/qstat
      * @return a map of qacct/qstat keys and their values
@@ -91,12 +89,14 @@ public class SgeActionExecutor extends ActionExecutor {
         XLog log = XLog.getLog(getClass());
         log.debug("Sge.check: {0}", action.getId());
         String jobId = action.getExternalId();
+        // we can use both to narrow the search when dealing with rollover
+        String name = action.getName();
 
         Result result;
         int SKIP_DELAY = 1000 * 5; // 5 seconds delay per check
         int TOTAL_DELAY = 1000 * 60; // 60 seconds to check in total
         int delayed = 0;
-        result = StatusChecker.check(jobId);
+        result = StatusChecker.check(jobId, name);
         log.debug("Sge.check externalStatus: {0}", result.status);
         while (result.status == JobStatus.LOST && delayed < TOTAL_DELAY) {
             delayed += SKIP_DELAY;
@@ -105,7 +105,7 @@ public class SgeActionExecutor extends ActionExecutor {
             } catch (InterruptedException ex) {
                 throw new IllegalStateException("Sge.check delay interrupted", ex);
             }
-            result = StatusChecker.check(jobId);
+            result = StatusChecker.check(jobId, name);
             log.debug("Sge.check externalStatus: {0}", result.status);
         }
         String externalStatus = result.status.toString();
