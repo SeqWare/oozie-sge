@@ -1,0 +1,9 @@
+notifications:
+  slack: oicr:S9k4EowgQv9AnbCfEZHSzCsg
+language: java
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+  - $HOME/.m2
